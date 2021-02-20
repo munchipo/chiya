@@ -97,7 +97,7 @@ class General(Cog):
     @commands.before_invoke(record_usage)
     @commands.command(name="pat")
     async def pat(self, ctx, user=None):
-        """ Pats the mentioned user/role. There, there. """
+        """ Pats the mentioned user. There, there. """
 
         embed = embeds.make_embed(context=ctx, color="gold")
 
