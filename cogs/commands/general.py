@@ -102,33 +102,12 @@ class General(Cog):
         embed = embeds.make_embed(context=ctx, color="gold")
 
         if user is not None:
-
-            if ('&' in user):
-                # Headpatting a role if the user can mention them
-                user_strip = int(user.strip("<@&>"))
-                role = ctx.guild.get_role(user_strip)
-                nick = None
-                if ctx.author.nick:
-                    nick = ctx.author.nick
-                else:
-                    nick = ctx.author.name
-
-                embed.title = f"{nick} just headpatted everyone in {role.name}. There, there."
-                embed.description = f"Don't forget to blush, {role.mention}!"
-
-                async with ctx.typing():
-                    embed.set_image(url=get_pat_gif())
-                    await asyncio.sleep(1)
-
-                await ctx.send(embed=embed)
-                return
-
             user_strip = int(user.strip("<@!>"))
             member = ctx.message.guild.get_member(user_strip)
             if member:
-                #headpatting a user
+                # headpatting a user
                 if member == ctx.author:
-                    #Preventing users from patting themselves
+                    # Preventing users from patting themselves
                     await ctx.send("W-wait! I'll pat you, *Nyan~*!")
                     return
 
