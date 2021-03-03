@@ -36,6 +36,7 @@ async def find_anime(search_term):
             episodes
             duration
             siteUrl
+            idMal
             tags {
                 name
             }
@@ -66,11 +67,14 @@ def get_page(search_result_list, page_no, ctx: Context) -> discord.Embed:
 
     anime_data = search_result_list[page_no]
 
-    embed = embeds.make_embed(title="Anime Search", context=ctx, color='gold')
+    page_number_msg = f"Page {page_no+1} of {len(search_result_list)}"
+
+    embed = embeds.make_embed(
+        title="Anime Search", description=page_number_msg, context=ctx, color='gold')
 
     try:
         embed = embeds.make_embed(
-            title="Anime Search", context=ctx, color='gold')
+            title="Anime Search", description=page_number_msg, context=ctx, color='gold')
         embed.set_thumbnail(url=anime_data['coverImage']['extraLarge'])
 
         try:
@@ -88,13 +92,20 @@ def get_page(search_result_list, page_no, ctx: Context) -> discord.Embed:
 
         embed.add_field(name="Description", value=description, inline=False)
 
-        embed.add_field(name="URL", value=anime_data['siteUrl'], inline=False)
+        embed.add_field(name="AniList URL",
+                        value=anime_data['siteUrl'], inline=False)
+
+        mal_url = f"https://myanimelist.net/anime/{anime_data['idMal']}/"
+        embed.add_field(name="MyAnimeList URL", value=mal_url, inline=False)
 
         if(anime_data['nextAiringEpisode']):
             embed.add_field(name="Next Airing Episode",
                             value=anime_data['nextAiringEpisode']['episode'], inline=True)
             embed.add_field(name="Next Episode In", value=str(datetime.timedelta(
                 seconds=int(anime_data['nextAiringEpisode']['timeUntilAiring']))))
+        else:
+            embed.add_field(name="Finished Airing. Last Aired Episode:",
+                            value=anime_data['episodes'], inline=True)
 
     except:
         return None
@@ -156,17 +167,19 @@ async def anime_paginator(search_results, ctx: Context):
             await msg.remove_reaction(reaction.emoji, user)
 
             if page_no <= 0:
-                continue
+                page_no = len(search_results) - 1
 
-            page_no -= 1
+            else:
+                page_no -= 1
 
         if reaction.emoji == RIGHT_EMOJI:
             await msg.remove_reaction(reaction.emoji, user)
 
             if page_no >= len(search_results) - 1:
-                continue
+                page_no = 0
 
-            page_no += 1
+            else:
+                page_no += 1
 
         embed = get_page(search_results, page_no, ctx)
 
