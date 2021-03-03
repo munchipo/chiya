@@ -9,6 +9,7 @@
 ###### Requirements without Version Specifiers ######
 coloredlogs                         # https://coloredlogs.readthedocs.io/en/latest/
 parsedatetime                       # https://pypi.org/project/parsedatetime/
+requests                            # https://pypi.org/project/requests/
 
 ###### Requirements with Version Specifiers ######
 dataset==1.4.4                      # https://dataset.readthedocs.io/
