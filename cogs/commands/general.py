@@ -54,7 +54,7 @@ class General(Cog):
 
     @commands.before_invoke(record_usage)
     @commands.command(name="userinfo", aliases=["info", "user", "whois"])
-    async def info(self, ctx, user=None):
+    async def info(self, ctx, user: discord.User = None):
         """ Returns the user info of the invoker or the mentioned user. """
 
         user = user or ctx.author
