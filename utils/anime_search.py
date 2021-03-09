@@ -187,7 +187,7 @@ async def anime_paginator(search_results, ctx: Context):
             await msg.edit(embed=embed)
 
 
-def get_pat_gif():
+def get_pat_gif() -> str:
     url1 = "https://nekos.life/api/v2/img/pat"
     url2 = "https://waifu.pics/api/sfw/pat"
     return random.choice([requests.get(url=url1).json()['url'], requests.get(url=url2).json()['url']])
