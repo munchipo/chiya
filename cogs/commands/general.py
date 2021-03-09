@@ -5,10 +5,11 @@ import discord
 from discord.enums import ContentFilter
 from discord.ext import commands
 from discord.ext.commands import Bot, Cog, Context
+from discord.ext.commands.converter import Greedy
 from discord.ext.commands.help import Paginator
+
 from utils import embeds
 from utils.anime_search import anime_paginator, find_anime, get_pat_gif
-from utils.pagination import LinePaginator
 from utils.record import record_usage
 
 log = logging.getLogger(__name__)
@@ -55,16 +56,11 @@ class General(Cog):
     @commands.command(name="userinfo", aliases=["info", "user", "whois"])
     async def info(self, ctx, user=None):
         """ Returns the user info of the invoker or the mentioned user. """
-        member = None
 
+        user = user or ctx.author
+        member = ctx.guild.get_member(user.id)
         # Attempt to return the info of a mentioned user if the parameter was not none.
-        if user is not None:
-            user_strip = int(user.strip("<@!>"))
-            member = ctx.message.guild.get_member(user_strip)
         # Otherwise, assume the invoker just wanted their own info and return that.
-        else:
-            member = ctx.message.guild.get_member(ctx.author.id)
-
         if member:
             embed = embeds.make_embed(
                 context=ctx).set_thumbnail(url=member.avatar_url)
@@ -89,6 +85,7 @@ class General(Cog):
                 embed.add_field(
                     name="Roles", value=role_mentions_str, inline=False)
 
+        # member is not a part of the guild
         else:
             raise commands.UserNotFound(member)
 
@@ -96,40 +93,32 @@ class General(Cog):
 
     @commands.before_invoke(record_usage)
     @commands.command(name="pat")
-    async def pat(self, ctx, user=None):
+    async def pat(self, ctx, user: discord.User = None):
         """ Pats the mentioned user. There, there. """
 
         embed = embeds.make_embed(context=ctx, color="gold")
 
-        if user is not None:
-            user_strip = int(user.strip("<@!>"))
-            member = ctx.message.guild.get_member(user_strip)
-            if member:
-                # headpatting a user
-                if member == ctx.author:
-                    # Preventing users from patting themselves
-                    await ctx.send("W-wait! I'll pat you, *Nyan~*!")
-                    return
+        nick = None
 
-                nick = None
-                if member.nick:
-                    nick = member.nick
-                else:
-                    nick = member.name
+        if user:
+            if user == ctx.author:
+                # User cannot pat themselves
+                await ctx.send("W-wait, I'll pat you, Nyan~!")
+                return
 
-                embed.title = f"{nick} just got a headpat. There, there."
-
-                async with ctx.typing():
-                    embed.set_image(url=get_pat_gif())
-                    await asyncio.sleep(1)
-
-            else:
-                raise commands.UserNotFound(user)
+            nick = ctx.guild.get_member(user.id).nick
+            if nick is None:
+                # if user has not set a nick, None is returned.
+                nick = ctx.guild.get_member(user.id).name
 
         else:
             # No reciever was mentioned
             await ctx.send("You need to pat someone, *Nyan~*.")
             return
+
+        async with ctx.typing():
+            embed.title = f"{nick} got a headpat! There, there~."
+            embed.set_image(url=get_pat_gif())
 
         await ctx.send(embed=embed)
 
