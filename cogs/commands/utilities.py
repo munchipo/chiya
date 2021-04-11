@@ -164,6 +164,18 @@ class UtilitiesCog(commands.Cog):
         else:
             await ctx.message.add_reaction("❌")
             await ctx.send("Module not found, check spelling, it's case sensitive")
+    
+    @utilities.command(name="unload")
+    async def unload_cog(self, ctx, module):
+        """ Unloads specified module. """
+        try:
+            self.bot.unload_extension(module)
+        except commands.ExtensionError as e:
+            await ctx.send(f'{e.__class__.__name__}: {e}')
+        
+        else:
+            await ctx.message.add_reaction("✔")
+            await ctx.send(f"Unloaded the {module} module.")
 
 
 def setup(bot) -> None:

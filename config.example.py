@@ -2,6 +2,7 @@ prefix =          "."
 token =           ""
 log_level =       "INFO" # NOTSET | TRACE | DEBUG | INFO | WARN | ERROR | CRITICAL
 database =        "chiya.db"
+saucenao_api_key = ""
 
 soft_red =        0xcd6d6d
 soft_green =      0x68c290

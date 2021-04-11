@@ -1,5 +1,6 @@
 import logging
 from typing import Union
+from utils.image_sauce import paginate_image_sauce
 
 import discord
 from discord.ext import commands
@@ -47,7 +48,18 @@ class General(Cog):
                 await ctx.message.delete()
             except discord.errors.HTTPException:
                 pass
-
+    
+    @commands.before_invoke(record_usage)
+    @commands.group(name="sauce", aliases=['s', 'source'])
+    async def sauce(self, ctx):
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(ctx.command)
+    
+    @sauce.command(name="image", aliases=['i', 'im', 'img'])
+    async def sauce_image(self, ctx, image_url: str):
+        """ Finds sauce for given image URL. """
+        await paginate_image_sauce(ctx, image_url)
+    
 
 def setup(bot: Bot) -> None:
     """ Load the General cog. """
