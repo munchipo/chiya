@@ -27,8 +27,12 @@ def _get_page(result, page: int, ctx: Context) -> discord.Embed:
         urls = "None found."
     embed.add_field(name="URLs", value=urls, inline=True)
 
-    if isinstance(result, VideoSauce):
+    if isinstance(data, VideoSauce):
         embed.add_field(name="Timestamp", value=data.est_time, inline=False)
+        embed.add_field(name="Episode", value=data.part, inline=False)
+    
+    if isinstance(data, BookSauce):
+        embed.add_field(name="Location", value=data.part, inline=False)
 
     return embed
 
