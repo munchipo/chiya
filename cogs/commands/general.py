@@ -36,11 +36,12 @@ class General(Cog):
         if isinstance(user, int):
             user = await self.bot.fetch_user(user)
 
+        embed = embeds.make_embed()
+
         if ctx.author:
-            embed = embeds.make_embed(ctx=ctx)
+            embed.ctx=ctx
 
         if user:
-            embed = embeds.make_embed()
             embed.set_author(icon_url=user.avatar_url, name=str(user))
 
         embed.set_image(url=user.avatar_url)
