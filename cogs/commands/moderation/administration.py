@@ -1,3 +1,4 @@
+import asyncio
 import io
 import logging
 import textwrap
@@ -9,6 +10,8 @@ import re
 import discord
 from discord.ext import commands
 from discord.ext.commands import Cog, Bot, Context
+from discord_slash import ComponentContext
+from discord_slash.utils.manage_components import create_select, create_select_option, create_actionrow
 
 import config
 from utils import embeds
@@ -268,6 +271,149 @@ class AdministrationCog(Cog):
         await msg.add_reaction(":pickaxe:831765423455993888")
         await ctx.message.delete()
 
+    @commands.is_owner()
+    @commands.bot_has_permissions(embed_links=True, send_messages=True)
+    @commands.before_invoke(record_usage)
+    @commands.command(name="createtestroles")
+    async def testroles(self, ctx: Context):
+        # Embed for default user color selections
+        embed = discord.Embed(description=f"You can select an option below to be assigned a colored user role.")
+        select = create_select(
+            options=[# the options in your dropdown
+                create_select_option("Red", value="804644608293208065", emoji=discord.utils.get(self.bot.emojis, name="redsquare")),
+                create_select_option("Orange", value="804889570633187358", emoji=discord.utils.get(self.bot.emojis, name="orangesquare")),
+                create_select_option("Yellow", value="804889964810469456", emoji=discord.utils.get(self.bot.emojis, name="yellowsquare")),
+                create_select_option("Green", value="804889968290824244", emoji=discord.utils.get(self.bot.emojis, name="greensquare")),
+                create_select_option("Blue", value="804889972091912202", emoji=discord.utils.get(self.bot.emojis, name="bluesquare")),
+                create_select_option("Purple", value="804889978672513034", emoji=discord.utils.get(self.bot.emojis, name="purplesquare")),
+                create_select_option("Pink", value="804889975103422477", emoji=discord.utils.get(self.bot.emojis, name="pinksquare")),
+                create_select_option("Remove", value="remove", emoji="🚫"),
+            ],
+            placeholder="Choose your role color",
+            min_values=1,
+            max_values=1,
+        )
+        await ctx.send(embed=embed, components=[create_actionrow(select)])
+
+        # Embed for high level users selections
+        embed = discord.Embed(description=f"Users who are <@&{config.roles['role_level_10']}> or higher can use the alternative color palette below.")
+        select = create_select(
+            options=[# the options in your dropdown
+                create_select_option("Gerbera Red", value="843860925298901073", emoji=discord.utils.get(self.bot.emojis, name="betterred")),
+                create_select_option("Mikan Orange", value="843862370178695199", emoji=discord.utils.get(self.bot.emojis, name="betterorange")),
+                create_select_option("Kiwi Green", value="843862741176418305", emoji=discord.utils.get(self.bot.emojis, name="bettergreen")),
+                create_select_option("Hyacinth Blue", value="843863397153374229", emoji=discord.utils.get(self.bot.emojis, name="betterblue")),
+                create_select_option("Violet Purple", value="843860376366219325", emoji=discord.utils.get(self.bot.emojis, name="betterpurple")),
+                create_select_option("Snowy White", value="859498075483406337", emoji=discord.utils.get(self.bot.emojis, name="betterwhite")),
+                create_select_option("Remove", value="remove", emoji="🚫"),
+            ],
+            placeholder="Choose your role color (level 10+)",
+            min_values=1,
+            max_values=1,
+        )
+        await ctx.send(embed=embed, components=[create_actionrow(select)])
+
+        # Embed for telling the users about the benefits of boosting the server.
+        embed = discord.Embed(description=f"Users who boost the server are entitled to a custom role with a color of their choice per boost, consider becoming a <@&{config.role_server_booster}>")
+        await ctx.send(embed=embed)
+
+        # Embed for general role pickups.
+        embed = discord.Embed(description=f"You can select an option below to be assigned an event role.")
+        select = create_select(
+            options=[# the options in your dropdown
+                create_select_option("Giveaway Events", value="843860925298901073", emoji="🎁"),
+                create_select_option("Server Announcements", value="843862370178695199", emoji="📢"),
+                create_select_option("Watch Party", value="843862741176418305", emoji="📽️"),
+                create_select_option("Mudae Player", value="843863397153374229", emoji=discord.utils.get(self.bot.emojis, name="kakeraW")),
+                create_select_option("Rin Player", value="843860376366219325", emoji="🧩"),
+                create_select_option("Remove All", value="remove", emoji="🚫"),
+            ],
+            placeholder="Choose your event role (level 10+)",
+            min_values=1,
+            max_values=5,
+        )
+        await ctx.send(embed=embed, components=[create_actionrow(select)])
+
+    @commands.Cog.listener()
+    async def on_component(self, ctx: ComponentContext):
+        async def wipe_colors(ctx: ComponentContext):
+            colors = list(config.roles_colors.values()) + list(config.roles_colors_lvl10.values())
+            # Remove any existing color roles before adding the desired color role.
+            for role in ctx.author.roles:
+                if role.id in colors:
+                    role = discord.utils.get(ctx.guild.roles, id=role.id)
+                    await ctx.author.remove_roles(role)
+            
+        # Do not process if the component selector is not in the config.
+        if ctx.origin_message_id not in [config.select_colors, config.select_colors_lvl10, config.select_events]:
+            embed = embeds.make_embed(description="🚫 Attempted to use an invalid selector.", color="soft_red")
+            await ctx.send(embed=embed, hidden=True)
+            return
+
+        # A user interacted with the color selector.
+        if ctx.origin_message_id == config.select_colors:
+            # Remove any existing color roles before adding the desired color role.
+            await wipe_colors(ctx=ctx)
+
+            # If the user just wanted to remove the role, we can just skip adding the new role.
+            if ctx.selected_options[0] == "remove":
+                embed = embeds.make_embed(description="✅ Successfully removed role.", color="soft_green")
+                await ctx.send(embed=embed, hidden=True)
+                return
+            
+            # Add the desired color role.
+            role = discord.utils.get(ctx.guild.roles, id=int(ctx.selected_options[0])) 
+            await ctx.author.add_roles(role)
+
+            # Send a successful embed when the role is added
+            embed = embeds.make_embed(description="✅ Successfully added role.", color="soft_green")
+            await ctx.send(embed=embed, hidden=True)
+
+        # A user interacted with the level 10 color selector.
+        if ctx.origin_message_id == config.select_colors_lvl10:
+            # Grab the IDs for the last 10 roles in the leveling system.
+            roles = list(config.roles.values())[9:20]
+
+            # If the user does not have any level 10+ roles, exit the function.
+            if not any(role.id in roles for role in ctx.author.roles):
+                embed = embeds.make_embed(description="🚫 You must be level 10+ to use this color palette.", color="soft_red")
+                await ctx.send(embed=embed, hidden=True)
+                return False
+
+            # Remove any existing color roles before adding the desired color role.
+            await wipe_colors(ctx=ctx)
+            
+            # If the user just wanted to remove the role, we can just skip adding the new role.
+            if ctx.selected_options[0] == "remove":
+                embed = embeds.make_embed(description="✅ Successfully removed role.", color="soft_green")
+                await ctx.send(embed=embed, hidden=True)
+                return
+
+            # Add the desired color role.
+            role = discord.utils.get(ctx.guild.roles, id=int(ctx.selected_options[0])) 
+            await ctx.author.add_roles(role)
+
+            # Send a successful embed when the role is added
+            embed = embeds.make_embed(description="✅ Successfully added role.", color="soft_green")
+            await ctx.send(embed=embed, hidden=True)
+        
+        # A user interacted with the event selector.
+        if ctx.origin_message_id == config.select_events:
+            if "remove" in ctx.selected_options:
+                roles = list(config.roles_events.values())
+                await ctx.author.remove_roles(roles)
+
+                embed = embeds.make_embed(description="✅ Successfully removed all roles.", color="soft_green")
+                await ctx.send(embed=embed, hidden=True)
+                return
+            
+            for role in ctx.selected_options:
+                await ctx.author.add_roles(ctx.selected_options)
+
+                embed = embeds.make_embed(description="✅ Successfully added selected roles.", color="soft_green")
+                await ctx.send(embed=embed, hidden=True)
+            
+        
 
 def setup(bot: Bot) -> None:
     """ Load the AdministrationCog cog. """
