@@ -109,13 +109,22 @@ class General(Cog):
                 pass
     
     @commands.before_invoke(record_usage)
-    @commands.command(name="sauce", aliases=['s', 'source'])
-    async def sauce(self, ctx, image_url):
+    @cog_ext.cog_slash(
+        name="sauce",
+        description="Looks for sauce of an image.",
+        guild_ids=[settings.get_value("guild_id")],
+        options=[
+            create_option(
+                name="image_url",
+                description="The image url.",
+                option_type=3,
+                required=True
+            ),
+        ],
+    )
+    async def sauce(self, ctx: SlashContext, image_url: str):
+        await ctx.defer()
         await paginate_image_sauce(ctx, image_url)
-    
-        # We need to send *something* so the bot doesn't return "This interaction failed"
-        delete = await ctx.send("** **")
-        await delete.delete()
 
 
 def setup(bot: Bot) -> None:

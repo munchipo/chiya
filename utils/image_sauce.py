@@ -2,19 +2,19 @@ import asyncio
 from discord.ext.commands.context import Context
 from saucenao_api import SauceNao, VideoSauce, BookSauce
 import discord
+from cogs.commands import settings
 import discord.ext.commands
-
-import config
 from utils import embeds
 
 
-sauce = SauceNao(config.saucenao_api_key)
+sauce = SauceNao(settings.get_value("saucenao_api_key"))
 
 
 def _get_page(result, page: int, ctx: Context) -> discord.Embed:
     # Fetches page x from result list and prepares a nice embed.
     data = result[page]
-    embed = embeds.make_embed("Sauce Found!", f"Page {page+1} of {len(result)}", ctx, 'gold')
+    embed = embeds.make_embed(
+        title="Sauce Found!", description=f"Page {page+1} of {len(result)}", ctx=ctx, color='gold')
     embed.set_thumbnail(url=data.thumbnail)
     embed.add_field(name="Title", value=data.title, inline=True)
     embed.add_field(name="Author", value=data.author, inline=True)
@@ -22,7 +22,7 @@ def _get_page(result, page: int, ctx: Context) -> discord.Embed:
     urls = ""
     for x in data.urls:
         urls = f"{urls}\n{x}"
-    
+
     if len(urls) == 0:
         urls = "None found."
     embed.add_field(name="URLs", value=urls, inline=True)
@@ -30,7 +30,7 @@ def _get_page(result, page: int, ctx: Context) -> discord.Embed:
     if isinstance(data, VideoSauce):
         embed.add_field(name="Timestamp", value=data.est_time, inline=False)
         embed.add_field(name="Episode", value=data.part, inline=False)
-    
+
     if isinstance(data, BookSauce):
         embed.add_field(name="Location", value=data.part, inline=False)
 
@@ -38,15 +38,16 @@ def _get_page(result, page: int, ctx: Context) -> discord.Embed:
 
 
 async def paginate_image_sauce(ctx: Context, url):
-    result = None
-    async with ctx.typing():
-        result = sauce.from_url(url)
+    result = sauce.from_url(url)
+
+    if result.status != 0:
+        await embeds.error_message("API Limits reached, no more sauce. :(")
 
     if (not bool(result)):
         # nothing found, so display an error
         await embeds.error_message("No results found.")
         return
-    
+
     FIRST_EMOJI = "\u23EE"   # [:track_previous:]
     LEFT_EMOJI = "\u2B05"    # [:arrow_left:]
     RIGHT_EMOJI = "\u27A1"   # [:arrow_right:]
@@ -118,11 +119,3 @@ async def paginate_image_sauce(ctx: Context, url):
 
         if embed is not None:
             await msg.edit(embed=embed)
-
-
-
-    
-
-    
-
-
