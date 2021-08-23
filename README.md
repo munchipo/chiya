@@ -1,121 +1,81 @@
-# Chiya - A discord Bot
 
-[![Discord Server](https://img.shields.io/discord/622243127435984927?label=Discord&logo=discord)](https://discord.gg/piracy) 
-[![Docker](https://github.com/ranimepiracy/Chiya/workflows/Docker/badge.svg?branch=master)](https://github.com/ranimepiracy/Chiya/actions)
+<p align="center">
+<img width="150" height="150" src="https://i.imgur.com/Lkqobis.png">
+</p>
 
-Our private bot for the /r/animepiracy.
+<p align="center">
+<b>A moderation-heavy general purpose Discord bot.</b>
+</p>
 
----
+<p align="center">
+<a href="https://discord.gg/piracy"><img src="https://img.shields.io/discord/622243127435984927?label=Discord&logo=discord"></a> <a href="https://github.com/ranimepiracy/Chiya/actions"><img src="https://github.com/ranimepiracy/Chiya/workflows/Docker/badge.svg?branch=master"></a>
+</p>
 
 ## Getting started
 
-* Scroll to the FAQ portion of this document if you have questions.
-The easiest way is to use [docker](https://docs.docker.com/engine/reference/run/):
+Chiya is deployed into a production environment using [Docker](https://docs.docker.com/engine/reference/run/) images. As such, the install guide will focus on deployment via Docker. Chiya has been tested on both Windows and Linux bare metal environments and attempts to retain compatibility across both operating systems but this may not always be the case. The install guide assumes that you already have Docker and [docker-compose](https://docs.docker.com/compose/) installed.
 
-**Step 1:**
-As the docker image is currently hosted on a private Github repo, you will need to login into the Github container registry first.
+You will also need a Discord bot with [privileged intents](https://discordpy.readthedocs.io/en/stable/intents.html) enabled and the token for that bot before installation. You can create a new Discord bot [here](https://discord.com/developers/). Keep in mind Chiya will need the `bot` and `applications.commands` scopes selected when you generate your OAuth2 URL to function properly. If you intend on using the Reddit functionality, you will also need to create a Reddit application [here](https://www.reddit.com/prefs/apps/).
 
-```Shell
-docker login https://docker.pkg.github.com -u USERNAME -p TOKEN
+## Install
+
+**Step 1:** Download the `docker-compose.yml` to your local file system with `curl`, `wget`, etc. like so:
+```
+$ wget https://github.com/ranimepiracy/Chiya/blob/master/docker-compose.yml
 ```
 
-* If security is a concern, pass the token as pipe instead of saving your token in your bash-history.
+**Step 2:** Create a `.env` file in the same folder as you saved your `docker-compose.yml` and fill out the following:
 
-```Shell
-cat ~/TOKEN.txt | docker login https://docker.pkg.github.com -u USERNAME --password-stdin
+```env
+# The Discord bot token from https://discordapp.com/developers/
+BOT_TOKEN=
+
+# The prefix for the bot to use. 
+# Not all commands are ported to slash commands due to some limitations.
+BOT_PREFIX=
+
+# The level at which logs should be outputted to console.
+# NOTSET, TRACE, DEBUG, INFO, WARN, ERROR, or CRITICAL
+LOG_LEVEL=
+
+# The folder where you plan to store your database files (on the host OS)
+DATABASE_FOLDER=
+
+# The folder where you plan to store your bot logs (on the host OS)
+LOGS_FOLDER=
+
+# Set two unique secure passwords for your MySQL users
+MYSQL_PASSWORD=
+MYSQL_ROOT_PASSWORD=
+
+# Your Reddit bot information from https://www.reddit.com/prefs/apps/
+REDDIT_CLIENT_ID=
+REDDIT_CLIENT_SECRET=
+
+# Your Reddit bot user agent, see: https://github.com/reddit-archive/reddit/wiki/API#rules
+REDDIT_USER_AGENT=
 ```
 
-**Step 2:**
-Run this script to auto-download and run the container.
+**Step 3:** Pull the Docker image by executing `docker-compose pull` in the same folder as the `docker-compose.yml`
 
-```Shell
-docker run -d \
-    --net="bridge" \
-    --name=chiya-bot \
-    -v <location you wish to keep database file>:/app/DATABASE.db \
-    -v <location you wish to edit config file>:/app/config.yml \
-    -e BOT_PREFIX=<symbol(s) that you want to begin bot commands with> \
-    -e BOT_TOKEN=<Discord bot token> \
-    -e LOG_LEVEL=INFO \
-    -e REDDIT_SUBREDDIT=<subreddit you wish to monitor after /r/> \
-    -e REDDIT_CLIENT_ID=<reddit bot client id> \
-    -e REDDIT_SECRET=<reddit bot secret token> \
-    -e REDDIT_USER_AGENT=<reddit bot username> \
-    docker.pkg.github.com/ranimepiracy/chiya/chiya-bot:latest
-```
+**Step 4:** Start Chiya by executing `docker container start chiya_bot_1`
 
-* Please replace all user variables in the above command defined by <> with the correct values.
+## Contributing
 
-### Example
+Contributors are more than welcome to help make Chiya a better bot. Please follow these steps to get your work merged in:
 
-```Shell
-docker run -d \
-    --net="bridge" \
-    --name=chiya-bot \
-    -v /apps/docker/chiya-bot:/app/DATABASE.db \
-    -v /apps/docker/chiya-bot:/app/config.yml \
-    -e BOT_PREFIX=$ \
-    -e BOT_TOKEN=ODA4ODUxOTg1NzMzMjU1MTk5.YCMkHQ.LuFw9zNYYYrAh2nAZwXZcWSy60A \
-    -e LOG_LEVEL=INFO \
-    -e REDDIT_SUBREDDIT=animepiracy \
-    -e REDDIT_CLIENT_ID=cNleNeyDrkHifh \
-    -e REDDIT_SECRET=BkkSYrd7fPJpx7k6yWlKTd6oNnobiS \
-    -e REDDIT_USER_AGENT=chiyadiscordbot \
-    docker.pkg.github.com/ranimepiracy/chiya/chiya-bot:latest
-```
+1. Reach out on Discord and propose your idea beforehand.
+2. Clone the repository `git clone` and create a new branch `git checkout -b branch_name` for your work.
+3. Add a feature, fix a bug, or refactor some code.
+4. Open a Pull Request with a comprehensive description of changes.
 
-Bot should now be running.
+## Built on
 
----
+Chiya relies predominantly on the following projects:
 
-## Building from source code
-
-**Step 1:**
-Download source files to your computer and open up a command-line-interface at that location.
-
-**Step 2:**
-Build the [Docker image](https://docs.docker.com/engine/reference/commandline/build/) with the following command:
-
-```Shell
-docker build . -t chiya-bot
-```
-
-**Step 3:**
-Run the container with this command.
-
-```Shell
-docker run -d \
-    --net="bridge" \
-    --name=<container name> \
-    -v /apps/docker/chiya-bot:/app/DATABASE.db \
-    -v /apps/docker/chiya-bot:/app/config.yml \
-    -e BOT_PREFIX=PASTE_BOT_PREFIX_HERE \
-    -e BOT_TOKEN=PASTE_BOT_TOKEN_HERE \
-    -e LOG_LEVEL=INFO \
-    -e REDDIT_SUBREDDIT=SUBREDDIT_NAME \
-    -e REDDIT_CLIENT_ID=REDDIT_BOT_CLIENT_ID \
-    -e REDDIT_SECRET=REDDIT_BOT_SECRET \
-    -e REDDIT_USER_AGENT=REDDIT_BOT_USER_AGENT \
-    chiya-bot
-```
-
-# FAQ
-
-## Where do I get a Token to download the docker image?
-
-* Everything you need to learn about creating a Github personal access token can be found [HERE](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
-
-## Why is the docker command so long?
-
-* The environmental variables do not have to be in the command but it is simple for them to be located there. If you do not wish for them to be located there because of security or other reasons, you can use the `config.yml` file for that usage instead. You simply follow the syntax of the [`config-default.yml`](https://github.com/ranimepiracy/Chiya/blob/master/config-default.yml) and **ONLY** type what you want to change or else you may break future changes.
-* Here is an example of what the two files look like compared to each other. Be sure you remove the `!ENV` Infix.
-![IMAGE](https://i.imgur.com/bJsGCyY.png)
-
-## Where can I make a Discord bot token?
-
-* You can find a helpful guide on where and how to make one [HERE](https://www.writebots.com/discord-bot-token/)
-* Be sure you set the correct Intents permissions, or your bot might not work correctly.
-
-## Where do I get a Reddit Client ID and Secret?
-
-* You need to make register your bot application on Reddit, you can do that [HERE](https://www.reddit.com/prefs/apps/)
+* [Python](https://www.python.org/)
+* [MariaDB](https://mariadb.org/)
+* [Docker](https://www.docker.com/)
+* [discord.py](https://github.com/Rapptz/discord.py)
+* [discord-py-slash-commands](https://github.com/discord-py-slash-commands/)
+* [dataset](https://dataset.readthedocs.io)

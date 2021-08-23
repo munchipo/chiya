@@ -4,10 +4,10 @@ import datetime
 import discord
 from discord.ext import commands
 
+from handlers import boosts
 from utils import embeds
 
 log = logging.getLogger(__name__)
-
 
 class GuildUpdates(commands.Cog):
     """Guild event handler cog."""
@@ -28,7 +28,7 @@ class GuildUpdates(commands.Cog):
         For more information:
             https://discordpy.readthedocs.io/en/stable/api.html#discord.on_guild_available
         """
-        log.info(f'{guild.name} has has become available.')
+        log.info(f'{guild.name} has become available.')
 
     @commands.Cog.listener()
     async def on_guild_unavailable(self, guild: discord.Guild) -> None:
@@ -40,7 +40,7 @@ class GuildUpdates(commands.Cog):
         For more information:
             https://discordpy.readthedocs.io/en/stable/api.html#discord.on_guild_unavailable
         """
-        log.info(f'{guild.name} has has become unavailable.')
+        log.info(f'{guild.name} is now unavailable.')
 
     @commands.Cog.listener()
     async def on_guild_channel_create(self, channel: discord.abc.GuildChannel) -> None:
@@ -55,7 +55,7 @@ class GuildUpdates(commands.Cog):
         For more information:
             https://discordpy.readthedocs.io/en/stable/api.html#discord.on_guild_channel_create
         """
-        log.info(f'{channel.name} has has been created in {channel.guild}.')
+        log.info(f'{channel.name} has been created in {channel.guild}.')
 
     @commands.Cog.listener()
     async def on_guild_channel_delete(self, channel: discord.abc.GuildChannel) -> None:
@@ -70,7 +70,7 @@ class GuildUpdates(commands.Cog):
         For more information:
             https://discordpy.readthedocs.io/en/stable/api.html#discord.on_guild_channel_delete
         """
-        log.info(f'{channel.name} has has been deleted in {channel.guild}.')
+        log.info(f'{channel.name} has been deleted in {channel.guild}.')
 
     @commands.Cog.listener()
     async def on_guild_channel_pins_update(self, channel: discord.abc.GuildChannel, last_pin: datetime.datetime) -> None:
@@ -219,17 +219,10 @@ class GuildUpdates(commands.Cog):
         For more information:
             https://discordpy.readthedocs.io/en/stable/api.html#discord.on_guild_update
         """
-        if after.premium_subscription_count > before.premium_subscription_count:
-            embed = embeds.make_embed(author=False, color="nitro_pink")
-            embed.title = f"A new booster appeared!"
-            embed.description = f"""Thank you so much for the server boost! We are now at {after.premium_subscription_count} boosts!
-
-            You can contact any <@&763031634379276308> member with a [hex color](https://www.google.com/search?q=hex+color) and your desired role name for a custom booster role."""
-            embed.set_image(url="https://i.imgur.com/O8R98p9.gif")
-            await before.system_channel.send(embed=embed)
-
+        await boosts.on_new_boost(before, after)
+        await boosts.on_removed_boost(before, after)
 
 def setup(bot: commands.Bot) -> None:
     """Load the guild_updates cog."""
     bot.add_cog(GuildUpdates(bot))
-    log.info("Cog loaded: guild_updates")
+    log.info("Listener loaded: guild_updates")
