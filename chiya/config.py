@@ -13,3 +13,4 @@ if not os.path.isfile(path):
     raise SystemExit
 
 config = parse_config(path)
+test = None
